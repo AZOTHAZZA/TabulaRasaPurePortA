@@ -4,373 +4,195 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Tabula Rasa - PURE PORT A</title>
 <style>
-/* --- 1. 物理的干渉の修正 (CSS) --- */
 :root { --ratio: 1.618; --bg: #0b0e11; --surface: #15191d; --accent: #6c757d; --text: #e9ecef; --border: #2d333b; }
 
 body { 
     font-family: 'Inter', 'Noto Sans JP', sans-serif; 
-    margin: 0; 
-    background: var(--bg); 
-    color: var(--text); 
-    /* 100vhの代わりに動的高さ(dvh)を使用 */
-    height: 100vh; height: 100dvh; 
-    display: flex; 
-    flex-direction: column; 
-    overflow: hidden; 
+    margin: 0; background: var(--bg); color: var(--text); 
+    height: 100dvh; display: flex; flex-direction: column; overflow: hidden; 
 }
 
 #viewport { 
-    flex-grow: 1; 
-    overflow-y: auto; 
-    padding: 15px; 
+    flex-grow: 1; overflow-y: auto; padding: 15px; 
     scroll-behavior: smooth; 
-    /* 下部ボタンがURLバーに隠れないよう巨大な余白を確保 */
-    padding-bottom: 120px; 
+    /* 下部の「港の掃除」が見えるよう十分なマージンを確保 */
+    padding-bottom: 150px; 
 }
 
-/* ボタンの反応向上 */
-.btn { 
-    width: 100%; 
-    padding: 12px; 
-    border: none; 
-    border-radius: 6px; 
-    font-weight: bold; 
-    cursor: pointer; 
-    font-size: 0.75rem; 
-    transition: opacity 0.2s; 
-    outline: none; 
-    margin-top: 5px;
-    /* タップ反応の遅延を防止 */
-    touch-action: manipulation;
-}
-.btn:active { opacity: 0.6; }
-.btn:disabled { cursor: not-allowed; filter: grayscale(1); opacity: 0.2; }
-
-/* 既存スタイル継承 */
 header { background: #000; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); flex-shrink: 0; }
-.brand-group { display: flex; flex-direction: column; }
-.super-title { font-size: 0.55rem; color: var(--accent); letter-spacing: 0.4em; font-weight: 300; line-height: 1; margin-bottom: 4px; }
-.brand { font-weight: 800; color: #fff; font-size: 0.85rem; letter-spacing: 0.15em; line-height: 1; }
+.brand { font-weight: 800; color: #fff; font-size: 0.85rem; letter-spacing: 0.15em; }
 nav { display: flex; background: #000; border-bottom: 1px solid #333; flex-shrink: 0; }
-.tab { flex: 1; padding: 12px; border: none; background: none; color: #666; font-weight: bold; cursor: pointer; font-size: 0.65rem; border-bottom: 2px solid transparent; text-transform: uppercase; outline: none; transition: 0.3s; }
+.tab { flex: 1; padding: 12px; border: none; background: none; color: #666; font-size: 0.65rem; cursor: pointer; border-bottom: 2px solid transparent; }
 .tab.active { color: #fff; border-bottom-color: var(--accent); background: #1a1a1a; }
+
 .pane { display: none; width: 100%; max-width: 1000px; margin: 0 auto; }
 .pane.active { display: block; }
 .card { background: var(--surface); border-radius: 10px; border: 1px solid var(--border); padding: 15px; margin-bottom: 15px; }
 .card-title { font-size: 0.6rem; font-weight: 700; color: #768390; margin-bottom: 10px; text-transform: uppercase; border-left: 3px solid var(--accent); padding-left: 10px; }
 
-@keyframes pulse-bridge {
-    0% { border-color: var(--accent); }
-    50% { border-color: #00ff00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.2); }
-    100% { border-color: var(--accent); }
-}
-.manifest-active { animation: pulse-bridge 2s infinite; border-style: solid !important; }
-
 .grid-mini { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; }
 .data-node { background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 8px; border-radius: 6px; text-align: center; }
-.label { font-size: 0.5rem; color: #768390; }
-.value { font-family: monospace; font-weight: bold; font-size: 0.75rem; }
+.value { font-family: monospace; font-weight: bold; font-size: 0.75rem; color: #00ff00; }
 
-input, select { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #444; border-radius: 6px; background: rgba(0,0,0,0.3); color: #fff; font-size: 0.8rem; box-sizing: border-box; }
+.btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.75rem; margin-top: 5px; touch-action: manipulation; }
 .btn-neutral { background: var(--accent); color: #fff; }
 .btn-danger { background: #a71d2a; color: #fff; }
 .btn-bridge { background: #4a3f35; color: #d4a017; border: 1px solid #d4a017; }
+input { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #444; border-radius: 6px; background: #000; color: #fff; }
 
-#chronicle-box { background: rgba(0,0,0,0.3); color: var(--text); padding: 12px; font-family: serif; font-size: 0.8rem; height: 180px; overflow-y: auto; border-radius: 6px; border: 1px solid var(--border); line-height: 1.5; }
-.manifest-view { background: #000; padding: 10px; border-radius: 4px; margin-bottom: 10px; border: 1px dashed var(--accent); font-size: 0.65rem; color: #00ff00; font-family: monospace; min-height: 44px; display: flex; align-items: center; justify-content: center; text-align: center; }
-
-@media (max-width: 600px) {
-    #pane-canvas > div:last-child { grid-template-columns: 1fr !important; }
-}
+.manifest-active { animation: pulse-bridge 2s infinite; border: 1px solid #00ff00 !important; color: #00ff00; }
+@keyframes pulse-bridge { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 </style>
 </head>
 <body>
 <header>
-    <div class="brand-group">
-        <div class="super-title" data-key="super_title">TABULA RASA</div>
-        <div class="brand" data-key="brand_port_a">PURE PORT A</div>
-    </div>
-    <div style="display: flex; gap: 8px;">
-        <select id="ui-tone" onchange="applyTheme()" style="width: auto; margin:0;">
-            <option value="neutral">Neutral</option>
-            <option value="logical">Logical</option>
-            <option value="universal">Universal</option>
-        </select>
-        <select id="ui-lang" onchange="updateLabels()" style="width: auto; margin:0;">
-            <option value="en">EN</option>
-            <option value="jp" selected>JP</option>
-        </select>
+    <div class="brand">PURE PORT A</div>
+    <div style="display:flex; gap:5px;">
+        <select id="ui-lang" onchange="updateLabels()"><option value="jp">JP</option><option value="en">EN</option></select>
     </div>
 </header>
-<nav id="main-nav">
-    <button class="tab active" id="btn-canvas" onclick="showPane('canvas')" data-key="tab_canvas">港 A</button>
-    <button class="tab" id="btn-book" onclick="showPane('book')" data-key="tab_book">公文書</button>
-    <button class="tab" id="btn-status" onclick="showPane('status')" data-key="tab_status">状態</button>
+<nav>
+    <button class="tab active" onclick="showPane('canvas')">港 A</button>
+    <button class="tab" onclick="showPane('status')">状態 / 掃除</button>
 </nav>
 <main id="viewport">
     <section id="pane-canvas" class="pane active">
-        <div class="card" id="card-total">
-            <div class="card-title" data-key="title_total">港 A 全体</div>
+        <div class="card">
+            <div class="card-title">100億の資産 (TOTAL)</div>
             <div class="grid-mini" id="total-display"></div>
         </div>
-        
-        <div class="card" id="card-warehouse">
-            <div class="card-title" data-key="title_warehouse">港 A 倉庫</div>
-            <div class="grid-mini" id="warehouse-display" style="margin-bottom:10px;"></div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <div>
-                    <select id="color-choice" onchange="updateButtonStates()"></select>
-                    <input type="number" id="brush-intensity" value="100" oninput="updateButtonStates()">
-                    <button class="btn btn-neutral" id="btn-vanning" onclick="vanningAction()" data-key="btn_vanning">積み込み</button>
-                </div>
-                <div style="display:flex; align-items:flex-end;">
-                    <button class="btn btn-bridge" id="btn-transport" onclick="transportAction()" data-key="btn_move_export">輸送</button>
-                </div>
-            </div>
+        <div class="card">
+            <div class="card-title">倉庫 (WAREHOUSE)</div>
+            <select id="color-choice"></select>
+            <input type="number" id="brush-intensity" value="10000000000" step="1000000000">
+            <button class="btn btn-neutral" onclick="vanningAction()">積み込み (100億対応)</button>
+            <button class="btn btn-bridge" onclick="transportAction()">輸出港へ移動</button>
         </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <div class="card" id="card-export">
-                <div class="card-title" data-key="title_export">輸出港 A</div>
-                <div class="grid-mini" id="export-display" style="margin-bottom:10px;"></div>
-                <label class="label" data-key="label_dest">出港先:</label>
-                <input type="text" id="destination-input" value="PORT_B">
-                <button class="btn btn-bridge" id="btn-sailing" onclick="sailingAction()" data-key="btn_sailing">出港</button>
-            </div>
-            <div class="card" id="card-import">
-                <div class="card-title" data-key="title_import">輸入港 A</div>
-                <div id="import-manifest" class="manifest-view"></div>
-                <div class="grid-mini" id="import-display" style="margin-bottom:10px;"></div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                    <button class="btn btn-neutral" id="btn-devanning" onclick="devanningAction()" data-key="btn_devanning">積み下ろし</button>
-                    <button class="btn btn-bridge" id="btn-arrival" onclick="arrivalAction()" data-key="btn_arrival">入港承認</button>
-                </div>
-            </div>
+        <div class="card">
+            <div class="card-title">輸出 (EXPORT)</div>
+            <div class="grid-mini" id="export-display"></div>
+            <input type="text" id="destination-input" value="PORT_B">
+            <button class="btn btn-bridge" onclick="sailingAction()">出港 (Sailing)</button>
+        </div>
+        <div class="card">
+            <div class="card-title">輸入 (IMPORT)</div>
+            <div id="import-manifest" style="font-family:monospace; font-size:0.7rem; padding:10px; background:#000; margin-bottom:10px;">待機なし</div>
+            <button class="btn btn-neutral" onclick="arrivalAction()">入港承認</button>
+            <button class="btn btn-bridge" onclick="devanningAction()">積み下ろし</button>
         </div>
     </section>
 
-    <section id="pane-book" class="pane">
-        <div class="card"><div class="card-title" data-key="title_book">公文書記録</div><div id="chronicle-box"></div></div>
-    </section>
     <section id="pane-status" class="pane">
         <div class="card">
-            <div class="card-title" data-key="title_status">港の状態</div>
+            <div class="card-title">物理状態 (z/w)</div>
             <div class="grid-mini">
-                <div class="data-node"><div class="label" data-key="label_z">zの状態</div><div class="value" id="z-val">0</div></div>
-                <div class="data-node"><div class="label" data-key="label_w">wの状態</div><div class="value" id="w-val">0</div></div>
+                <div class="data-node"><div class="label">z-Status</div><div class="value" id="z-val">0</div></div>
+                <div class="data-node"><div class="label">w-Status</div><div class="value" id="w-val">0</div></div>
             </div>
         </div>
-        <div class="card">
-            <div class="card-title" data-key="title_reset">港の掃除</div>
-            <button class="btn btn-danger" onclick="executeClean()" data-key="btn_reset">港を掃除する</button>
+        <div class="card" style="border: 2px solid #a71d2a;">
+            <div class="card-title" style="color:#ff7b72;">港の掃除 (RESET)</div>
+            <p style="font-size:0.7rem; color:#8b949e;">※全ての資産と記録を初期化し、512バイトの純粋な状態に戻します。</p>
+            <button class="btn btn-danger" onclick="executeClean()">港を掃除する (EXECUTE CLEAN)</button>
         </div>
     </section>
 </main>
 
 <script>
-// --- 2. 論理の安定化 (JS) ---
 const COLOR_SYSTEM = ["PURE", "USD", "JPY", "EUR", "BTC", "ETH", "MATIC"];
-const PHI = 1.6180339887;
+let studio = { z: 0.05, ports: { warehouse: {}, export: {}, import: {} } };
 
-class PurePort {
-    constructor(assets = null) {
-        this.assets = assets || Object.fromEntries(COLOR_SYSTEM.map(c => [c, 0]));
-    }
-    flowTo(targetPort, unit, amount, z) {
-        const w = 1 / (z || 0.001);
-        const friction = (1 / w) * 0.0001;
-        const totalOut = amount + friction;
-        if (this.assets[unit] >= totalOut && amount > 0) {
-            this.assets[unit] -= totalOut;
-            targetPort.assets[unit] += amount;
-            return { success: true, friction: friction };
-        }
-        return { success: false };
-    }
+function init() {
+    COLOR_SYSTEM.forEach(c => {
+        studio.ports.warehouse[c] = 0;
+        studio.ports.export[c] = 0;
+        studio.ports.import[c] = 0;
+    });
 }
 
-let studio = {
-    z: 0.05, w: 0,
-    ports: { warehouse: new PurePort(), export: new PurePort(), import: new PurePort() },
-    tone: 'neutral', lang: 'jp', chronicles: []
-};
-
-function save() {
-    localStorage.setItem('tabula_rasa_port_a_v15_pure', JSON.stringify({
-        tension: studio.z,
-        assets: { warehouse: studio.ports.warehouse.assets, export: studio.ports.export.assets, import: studio.ports.import.assets },
-        tone: studio.tone, lang: studio.lang, chronicles: studio.chronicles
-    }));
-}
-
+function save() { localStorage.setItem('TR_PORT_A_CORE', JSON.stringify(studio)); }
 function load() {
-    const data = JSON.parse(localStorage.getItem('tabula_rasa_port_a_v15_pure'));
-    if (data) {
-        studio.z = data.tension;
-        studio.ports.warehouse.assets = data.assets.warehouse;
-        studio.ports.export.assets = data.assets.export;
-        studio.ports.import.assets = data.assets.import;
-        studio.tone = data.tone; studio.lang = data.lang; studio.chronicles = data.chronicles;
-    }
-}
-
-function updateState() {
-    const totalPure = studio.ports.warehouse.assets.PURE + studio.ports.export.assets.PURE + studio.ports.import.assets.PURE;
-    studio.z = (0.05 + (totalPure / 1000)) % (PHI * 2);
-    studio.w = 1 / (studio.z || 0.001);
+    const data = JSON.parse(localStorage.getItem('TR_PORT_A_CORE'));
+    if (data) studio = data; else init();
+    render();
 }
 
 function render() {
-    updateState();
-    const d = DICTIONARY[studio.lang];
-    document.getElementById('z-val').textContent = studio.z.toFixed(8);
-    document.getElementById('w-val').textContent = studio.w.toFixed(8);
-
-    renderGrid('total-display', Object.fromEntries(COLOR_SYSTEM.map(c => [c, studio.ports.warehouse.assets[c] + studio.ports.export.assets[c] + studio.ports.import.assets[c]])));
-    renderGrid('warehouse-display', studio.ports.warehouse.assets);
-    renderGrid('export-display', studio.ports.export.assets);
-    renderGrid('import-display', studio.ports.import.assets);
-    
-    document.getElementById('chronicle-box').innerHTML = studio.chronicles.map(c => `<p><i>[${c.t}]</i> ${c.m}</p>`).reverse().join('');
-    
-    const incoming = localStorage.getItem('TR_Bridge_to_PORT_A');
+    renderGrid('total-display', studio.ports.warehouse, studio.ports.export, studio.ports.import);
+    renderGrid('export-display', studio.ports.export);
+    const inc = localStorage.getItem('TR_Bridge_to_PORT_A');
     const display = document.getElementById('import-manifest');
-    if (incoming) {
-        const p = JSON.parse(incoming);
-        display.innerHTML = `${d.manifest_capture} FROM: ${p.from}<br>${p.unit}: ${p.amount}`;
-        display.classList.add('manifest-active');
-    } else {
-        display.textContent = d.manifest_none;
-        display.classList.remove('manifest-active');
-    }
-    updateButtonStates();
+    if(inc) { display.classList.add('manifest-active'); display.innerHTML = "[捕捉] シグナル検知"; }
+    else { display.classList.remove('manifest-active'); display.innerHTML = "待機なし"; }
+    document.getElementById('z-val').textContent = (0.05 + (studio.ports.warehouse.PURE / 1000)).toFixed(4);
 }
 
-function renderGrid(id, data) {
-    document.getElementById(id).innerHTML = COLOR_SYSTEM.map(c => `
-        <div class="data-node"><div class="label">${c}</div><div class="value">${(data[c]||0).toFixed(4)}</div></div>
-    `).join('');
-}
-
-function updateButtonStates() {
-    const unit = document.getElementById('color-choice').value;
-    const amountInput = parseFloat(document.getElementById('brush-intensity').value) || 0;
-    document.getElementById('btn-vanning').disabled = amountInput <= 0;
-    document.getElementById('btn-transport').disabled = !(studio.ports.warehouse.assets[unit] >= amountInput && amountInput > 0);
-    document.getElementById('btn-sailing').disabled = !(studio.ports.export.assets[unit] > 0);
-    document.getElementById('btn-arrival').disabled = !localStorage.getItem('TR_Bridge_to_PORT_A');
-    document.getElementById('btn-devanning').disabled = !COLOR_SYSTEM.some(c => studio.ports.import.assets[c] > 0);
+function renderGrid(id, w, e = null, i = null) {
+    document.getElementById(id).innerHTML = COLOR_SYSTEM.map(c => {
+        const val = (w[c] || 0) + (e ? (e[c] || 0) : 0) + (i ? (i[c] || 0) : 0);
+        return `<div class="data-node"><div class="label">${c}</div><div class="value">${val.toLocaleString()}</div></div>`;
+    }).join('');
 }
 
 function vanningAction() {
     const unit = document.getElementById('color-choice').value;
-    const amount = Math.abs(parseFloat(document.getElementById('brush-intensity').value)) || 0;
-    studio.ports.warehouse.assets[unit] += amount;
-    writeChronicle(`${amount} ${unit} ${DICTIONARY[studio.lang].log_vanning}`);
+    const amount = parseFloat(document.getElementById('brush-intensity').value);
+    studio.ports.warehouse[unit] += amount;
     save(); render();
 }
 
 function transportAction() {
     const unit = document.getElementById('color-choice').value;
-    const amount = Math.abs(parseFloat(document.getElementById('brush-intensity').value)) || 0;
-    const result = studio.ports.warehouse.flowTo(studio.ports.export, unit, amount, studio.z);
-    if (result.success) {
-        writeChronicle(`${amount} ${unit} ${DICTIONARY[studio.lang].log_transport}`);
+    const amount = parseFloat(document.getElementById('brush-intensity').value);
+    if(studio.ports.warehouse[unit] >= amount) {
+        studio.ports.warehouse[unit] -= amount;
+        studio.ports.export[unit] += amount;
         save(); render();
     }
 }
 
 function sailingAction() {
-    const d = DICTIONARY[studio.lang];
     const unit = document.getElementById('color-choice').value;
-    const amount = studio.ports.export.assets[unit];
-    const dest = document.getElementById('destination-input').value.trim();
-    studio.ports.export.assets[unit] = 0;
-    const manifest = { unit, amount, from: "PORT_A", id: "SIG-A" + Date.now().toString(16).toUpperCase(), z: studio.z };
-    localStorage.setItem('TR_Bridge_to_' + dest, JSON.stringify(manifest));
-    writeChronicle(`${d.log_sailing_prefix} ${dest} ${d.log_sailing_suffix} ${amount} ${unit}`);
-    save(); render();
+    const amount = studio.ports.export[unit];
+    const dest = document.getElementById('destination-input').value;
+    if(amount > 0) {
+        localStorage.setItem('TR_Bridge_to_' + dest, JSON.stringify({unit, amount, from:"PORT_A"}));
+        studio.ports.export[unit] = 0;
+        save(); render();
+    }
 }
 
 function arrivalAction() {
-    const incoming = localStorage.getItem('TR_Bridge_to_PORT_A');
-    if (!incoming) return;
-    const p = JSON.parse(incoming);
-    studio.ports.import.assets[p.unit] += p.amount;
-    localStorage.removeItem('TR_Bridge_to_PORT_A');
-    writeChronicle(`${p.from} ${DICTIONARY[studio.lang].log_arrival} ${p.amount} ${p.unit}`);
-    save(); render();
+    const inc = JSON.parse(localStorage.getItem('TR_Bridge_to_PORT_A'));
+    if(inc) {
+        studio.ports.import[inc.unit] += inc.amount;
+        localStorage.removeItem('TR_Bridge_to_PORT_A');
+        save(); render();
+    }
 }
 
 function devanningAction() {
-    COLOR_SYSTEM.forEach(c => {
-        const amt = studio.ports.import.assets[c];
-        if (amt > 0) studio.ports.import.flowTo(studio.ports.warehouse, c, amt, studio.z);
-    });
-    writeChronicle(DICTIONARY[studio.lang].log_devanning);
+    COLOR_SYSTEM.forEach(c => { studio.ports.warehouse[c] += studio.ports.import[c]; studio.ports.import[c] = 0; });
     save(); render();
-}
-
-const DICTIONARY = {
-    en: { 
-        super_title: "TABULA RASA", brand_port_a: "PURE PORT A", tab_canvas: "PORT A", tab_book: "ARCHIVE", tab_status: "STATUS", 
-        title_total: "TOTAL", title_warehouse: "WAREHOUSE", title_export: "EXPORT", title_import: "IMPORT", 
-        btn_vanning: "VANNING", btn_move_export: "TRANSPORT", btn_sailing: "SAILING", btn_arrival: "ARRIVAL", btn_devanning: "DEVANNING", 
-        label_z: "z-Status", label_w: "w-Status", label_dest: "Destination:",
-        manifest_none: "No vessels", manifest_capture: "[CAPTURED]",
-        log_vanning: "vanned.", log_transport: "transported.", log_sailing_prefix: "Sailed to", log_sailing_suffix: ":", log_arrival: "arrived:", log_devanning: "Complete."
-    },
-    jp: { 
-        super_title: "タブラ・ラサ", brand_port_a: "ピュア・ポートA", tab_canvas: "港 A", tab_book: "公文書", tab_status: "状態", 
-        title_total: "全体", title_warehouse: "倉庫", title_export: "輸出港", title_import: "輸入港", 
-        btn_vanning: "積み込み", btn_move_export: "輸送", btn_sailing: "出港", btn_arrival: "入港承認", btn_devanning: "積み下ろし", 
-        label_z: "zの状態", label_w: "wの状態", label_dest: "先:",
-        manifest_none: "待機なし", manifest_capture: "[捕捉]",
-        log_vanning: "を倉庫へ。", log_transport: "を輸出港へ。", log_sailing_prefix: "", log_sailing_suffix: "へ出港:", log_arrival: "より到着:", log_devanning: "完了。"
-    }
-};
-
-function updateLabels() {
-    studio.lang = document.getElementById('ui-lang').value;
-    const d = DICTIONARY[studio.lang];
-    document.querySelectorAll('[data-key]').forEach(el => { el.textContent = d[el.getAttribute('data-key')]; });
-    const sel = document.getElementById('color-choice');
-    const cur = sel.value;
-    sel.innerHTML = ''; COLOR_SYSTEM.forEach(c => sel.add(new Option(c, c)));
-    if (cur) sel.value = cur;
-    render();
-}
-
-function applyTheme() {
-    studio.tone = document.getElementById('ui-tone').value;
-    const theme = TONES[studio.tone];
-    Object.keys(theme).forEach(k => document.documentElement.style.setProperty(`--${k}`, theme[k]));
-    save();
-}
-
-const TONES = {
-    neutral: { bg: "#0b0e11", surface: "#15191d", accent: "#6c757d", text: "#e9ecef", border: "#2d333b" },
-    logical: { bg: "#050a0f", surface: "#0a141e", accent: "#007bff", text: "#a0d1ff", border: "#1a3a5a" },
-    universal: { bg: "#1a1612", surface: "#2a241e", accent: "#d4a017", text: "#fff4e0", border: "#4a3f35" }
-};
-
-function writeChronicle(m) {
-    studio.chronicles.push({ t: new Date().toLocaleTimeString(), m });
-    if (studio.chronicles.length > 50) studio.chronicles.shift();
 }
 
 function showPane(id) {
     document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.getElementById('pane-' + id).classList.add('active');
-    document.getElementById('btn-' + id).classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
 }
 
 function executeClean() {
-    if (confirm("Clean?")) { localStorage.removeItem('tabula_rasa_port_a_v15_pure'); location.reload(); }
+    if(confirm("全ての記録を消去し、港を初期化しますか？")) {
+        localStorage.clear();
+        location.reload();
+    }
 }
 
-document.addEventListener('DOMContentLoaded', () => { load(); updateLabels(); applyTheme(); setInterval(render, 800); });
+const sel = document.getElementById('color-choice');
+COLOR_SYSTEM.forEach(c => sel.add(new Option(c, c)));
+document.addEventListener('DOMContentLoaded', load);
 </script>
 </body>
 </html>
