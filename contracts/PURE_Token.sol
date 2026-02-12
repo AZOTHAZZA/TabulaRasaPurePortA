@@ -13,10 +13,9 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * 「論理の沈黙」を体現したものである。
  */
 contract PURE_Token is ERC20 {
-    
     // 【論理的確定：固定供給量をパブリック定数として公開し、不変性を強制】
-    // 供給量は100万トークン。これはアルケーの安定と普遍性を象徴する。
-    uint256 public constant FINAL_SUPPLY = 1_000_000 * 10 ** 18; // 1,000,000 PURE
+    // 供給量は100億トークン。これはアルケーの流動と万物生成の源泉を象徴する。
+    uint256 public constant FINAL_SUPPLY = 10_000_000_000 * 10 ** 18; // 10,000,000,000 PURE
 
     /**
      * @dev Constructor: トークン名とシンボルを PURE へと刷新。
