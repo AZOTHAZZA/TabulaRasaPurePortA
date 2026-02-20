@@ -1,48 +1,120 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PURE 34 Portal</title>
-    <link rel="manifest" href="manifest.json">
-    <style>
-        body { background: #000; color: #0ff; font-family: monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
-        #portal-ui { border: 1px solid #0ff; padding: 20px; box-shadow: 0 0 20px #0ff; max-width: 90vw; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 15px; }
-        .slot { border: 1px solid #055; padding: 5px; font-size: 10px; text-align: center; }
-        .jump-btn { margin: 10px; padding: 10px; background: #033; color: #0ff; border: 1px solid #0ff; cursor: pointer; text-decoration: none; }
-        .jump-btn:hover { background: #0ff; color: #000; }
-        h1 { font-size: 1.618rem; margin: 0; }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Tabula Rasa - PURE PORT A</title>
+<style>
+:root { --ratio: 1.618; --bg: #0b0e11; --surface: #15191d; --accent: #6c757d; --text: #e9ecef; --border: #2d333b; }
+body { font-family: 'Inter', 'Noto Sans JP', sans-serif; margin: 0; background: var(--bg); color: var(--text); height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+#viewport { flex-grow: 1; overflow-y: auto; padding: 15px; padding-bottom: 150px; }
+header { background: #000; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); }
+.brand { font-weight: 800; color: #fff; font-size: 0.85rem; letter-spacing: 0.15em; }
+nav { display: flex; background: #000; border-bottom: 1px solid #333; }
+.tab { flex: 1; padding: 12px; border: none; background: none; color: #666; font-size: 0.65rem; cursor: pointer; }
+.tab.active { color: #fff; border-bottom: 2px solid var(--accent); background: #1a1a1a; }
+.pane { display: none; }
+.pane.active { display: block; }
+.card { background: var(--surface); border-radius: 10px; border: 1px solid var(--border); padding: 15px; margin-bottom: 15px; }
+.card-title { font-size: 0.6rem; font-weight: 700; color: #768390; margin-bottom: 10px; text-transform: uppercase; border-left: 3px solid var(--accent); padding-left: 10px; }
+.grid-mini { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 6px; }
+.data-node { background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 5px; border-radius: 4px; text-align: center; }
+.label { font-size: 0.55rem; color: #768390; overflow: hidden; text-overflow: ellipsis; }
+.value { font-family: monospace; font-weight: bold; font-size: 0.7rem; color: #00ff00; }
+.btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.75rem; margin-top: 5px; }
+.btn-neutral { background: var(--accent); color: #fff; }
+.btn-danger { background: #a71d2a; color: #fff; }
+.btn-bridge { background: #4a3f35; color: #d4a017; border: 1px solid #d4a017; }
+input, select { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #444; border-radius: 6px; background: #000; color: #fff; }
+</style>
 </head>
 <body>
-    <div id="portal-ui">
-        <h1>PURE: 34-SLOT CORE</h1>
-        <div style="margin-top: 20px;">
-            <a href="https://[あなたのユーザー名].github.io/TabulaRasaPurePortA/" class="jump-btn">JUMP TO PortA (GOLD)</a>
-            <a href="https://[あなたのユーザー名].github.io/TabulaRasaPurePortB/" class="jump-btn">JUMP TO PortB (BLUE)</a>
-        </div>
-        <div class="grid" id="slots"></div>
+<header>
+    <div class="brand">PURE PORT A</div>
+    <div style="display:flex; gap:10px; align-items:center;">
+        <a href="https://azothazza.github.io/TabulaRasaPurePortB/" class="btn-bridge" style="text-decoration:none; padding:5px 10px; font-size:0.6rem;">JUMP B</a>
+        <button class="btn-bridge" style="width:auto; padding:5px 10px;" onclick="location.reload()">SYNC</button>
     </div>
+</header>
+<nav><button class="tab active" onclick="showPane('canvas')">港 A</button><button class="tab" onclick="showPane('status')">状態 / 掃除</button></nav>
+<main id="viewport">
+    <section id="pane-canvas" class="pane active">
+        <div class="card"><div class="card-title">全 34 資産 (TOTAL)</div><div class="grid-mini" id="total-display"></div></div>
+        <div class="card">
+            <div class="card-title">倉庫 (WAREHOUSE)</div>
+            <select id="color-choice"></select>
+            <input type="number" id="brush-intensity" value="1000000000" step="1000000">
+            <button class="btn btn-neutral" onclick="vanningAction()">積み込み</button>
+            <button class="btn btn-bridge" onclick="transportAction()">輸出港へ移動</button>
+        </div>
+        <div class="card">
+            <div class="card-title">輸出 (EXPORT)</div>
+            <div class="grid-mini" id="export-display"></div>
+            <button class="btn btn-bridge" onclick="sailingAction()">出港 (Sailing)</button>
+        </div>
+        <div class="card">
+            <div class="card-title">輸入 (IMPORT)</div>
+            <div id="import-manifest" style="font-family:monospace; font-size:0.7rem; padding:10px; background:#000; margin-bottom:10px;">待機なし</div>
+            <button class="btn btn-neutral" onclick="arrivalAction()">入港承認</button>
+            <button class="btn btn-bridge" onclick="devanningAction()">積み下ろし</button>
+        </div>
+    </section>
+</main>
+<script>
+const COLOR_SYSTEM = ["PURE","USD","JPY","EUR","BTC","ETH","MATIC","N","W","J","bps","bit","byte","BOOT","Solidity","STORAGE","index.html",".bin",".js",".css",".json","Unicode","AI_CORE","THOUGHT","PROMPT","GEN_DATA","SWIFT","KOTLIN","FONT_CORE","GLYPH","KERNING","BIOLOGY","ESTHETICS","QUALIA"];
+let studio = { z: 0.05, w: 0.0, ports: { warehouse: {}, export: {}, import: {} } };
 
-    <script>
-        const COLOR_SYSTEM = [
-            "PURE", "USD", "JPY", "EUR", "BTC", "ETH", "MATIC", // 1-7
-            "N", "W", "J", "bps", "bit", "byte",               // 8-13
-            "BOOT", "Solidity", "STORAGE", "index.html",       // 14-17
-            ".bin", ".js", ".css", ".json",                    // 18-21
-            "Unicode", "AI_CORE", "THOUGHT", "PROMPT", "GEN_DATA", // 22-26
-            "SWIFT", "KOTLIN",                                 // 27-28
-            "FONT_CORE", "GLYPH", "KERNING",                   // 29-31
-            "BIOLOGY", "ESTHETICS", "QUALIA"                   // 32-34
-        ];
-        const grid = document.getElementById('slots');
-        COLOR_SYSTEM.forEach((name, i) => {
-            const div = document.createElement('div');
-            div.className = 'slot';
-            div.textContent = `${i+1}:${name}`;
-            grid.appendChild(div);
-        });
-    </script>
+function init() { COLOR_SYSTEM.forEach(c => { studio.ports.warehouse[c] = 0; studio.ports.export[c] = 0; studio.ports.import[c] = 0; }); }
+function save() { localStorage.setItem('TR_PORT_A_CORE', JSON.stringify(studio)); }
+function load() { const data = JSON.parse(localStorage.getItem('TR_PORT_A_CORE')); if (data) studio = data; else init(); render(); }
+function render() {
+    renderGrid('total-display', studio.ports.warehouse, studio.ports.export, studio.ports.import);
+    renderGrid('export-display', studio.ports.export);
+    const inc = localStorage.getItem('TR_Bridge_to_PORT_A');
+    document.getElementById('import-manifest').innerHTML = inc ? "[捕捉] シグナル検知" : "待機なし";
+}
+function renderGrid(id, w, e = null, i = null) {
+    document.getElementById(id).innerHTML = COLOR_SYSTEM.map(c => {
+        const val = (w[c] || 0) + (e ? (e[c] || 0) : 0) + (i ? (i[i] || 0) : 0);
+        return `<div class="data-node"><div class="label">${c}</div><div class="value">${val.toLocaleString()}</div></div>`;
+    }).join('');
+}
+function vanningAction() { 
+    const unit = document.getElementById('color-choice').value; 
+    const amount = parseFloat(document.getElementById('brush-intensity').value); 
+    studio.ports.warehouse[unit] = (studio.ports.warehouse[unit] || 0) + amount; 
+    save(); render(); 
+}
+function transportAction() { 
+    const unit = document.getElementById('color-choice').value; 
+    const amount = parseFloat(document.getElementById('brush-intensity').value); 
+    if((studio.ports.warehouse[unit] || 0) >= amount) { 
+        studio.ports.warehouse[unit] -= amount; 
+        studio.ports.export[unit] = (studio.ports.export[unit] || 0) + amount; save(); render(); 
+    } 
+}
+function sailingAction() { 
+    const unit = document.getElementById('color-choice').value; 
+    const amount = studio.ports.export[unit]; 
+    if(amount > 0) { 
+        localStorage.setItem('TR_Bridge_to_PORT_B', JSON.stringify({unit, amount, from:"PORT_A"})); 
+        studio.ports.export[unit] = 0; save(); render(); 
+    } 
+}
+function arrivalAction() { 
+    const inc = JSON.parse(localStorage.getItem('TR_Bridge_to_PORT_A')); 
+    if(inc) { 
+        studio.ports.import[inc.unit] = (studio.ports.import[inc.unit] || 0) + inc.amount; localStorage.removeItem('TR_Bridge_to_PORT_A'); save(); render(); 
+    } 
+}
+function devanningAction() { 
+    COLOR_SYSTEM.forEach(c => { studio.ports.warehouse[c] = (studio.ports.warehouse[c] || 0) + (studio.ports.import[c] || 0); studio.ports.import[c] = 0; }); 
+    save(); render(); 
+}
+function showPane(id) { document.querySelectorAll('.pane').forEach(p => p.classList.remove('active')); document.getElementById('pane-' + id).classList.add('active'); }
+
+const sel = document.getElementById('color-choice'); 
+COLOR_SYSTEM.forEach(c => sel.add(new Option(c, c)));
+document.addEventListener('DOMContentLoaded', load);
+</script>
 </body>
 </html>
