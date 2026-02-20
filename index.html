@@ -25,6 +25,7 @@ nav { display: flex; background: #000; border-bottom: 1px solid #333; }
 .btn-danger { background: #a71d2a; color: #fff; }
 .btn-bridge { background: #4a3f35; color: #d4a017; border: 1px solid #d4a017; }
 input, select { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #444; border-radius: 6px; background: #000; color: #fff; }
+#port-log { font-family: 'Courier New', monospace; font-size: 0.6rem; height: 120px; overflow-y: auto; background: #000; padding: 8px; color: #8b949e; border: 1px solid var(--border); line-height: 1.4; }
 </style>
 </head>
 <body>
@@ -50,15 +51,15 @@ input, select { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px soli
             <select id="color-choice"></select>
             <input type="number" id="brush-intensity" value="1000000000" step="1000000">
             <button class="btn btn-neutral" onclick="vanningAction()">積み込み</button>
-            <button class="btn btn-bridge" onclick="transportAction()">輸出港へ移動</button>
+            <button class="btn btn-bridge" onclick="transportAction()">輸出準備へ移動</button>
         </div>
         <div class="card">
-            <div class="card-title">輸出 (EXPORT)</div>
+            <div class="card-title">輸出 (EXPORT) ➔ TO PORT B</div>
             <div class="grid-mini" id="export-display"></div>
-            <button class="btn btn-bridge" onclick="sailingAction()">出港 (Sailing)</button>
+            <button class="btn btn-bridge" onclick="sailingAction()">出港 (Sailing to B)</button>
         </div>
         <div class="card">
-            <div class="card-title">輸入 (IMPORT)</div>
+            <div class="card-title">輸入 (IMPORT) ➔ FROM PORT B</div>
             <div id="import-manifest" style="font-family:monospace; font-size:0.7rem; padding:10px; background:#000; margin-bottom:10px;">待機なし</div>
             <button class="btn btn-neutral" onclick="arrivalAction()">入港承認</button>
             <button class="btn btn-bridge" onclick="devanningAction()">積み下ろし</button>
@@ -68,24 +69,33 @@ input, select { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px soli
         <div class="card">
             <div class="card-title">物理状態 (z/w)</div>
             <div class="grid-mini">
-                <div class="data-node"><div class="label">z-Status</div><div class="value" id="z-val">0.0500</div></div>
-                <div class="data-node"><div class="label">w-Status</div><div class="value" id="w-val">0.0000</div></div>
+                <div class="data-node"><div class="label">z-Status</div><div class="value" id="z-val">0</div></div>
+                <div class="data-node"><div class="label">w-Status</div><div class="value" id="w-val">0</div></div>
             </div>
+        </div>
+        <div class="card">
+            <div class="card-title">航海日誌 (PORT LOG)</div>
+            <div id="port-log"></div>
         </div>
         <div class="card" style="border: 2px solid #a71d2a;">
             <div class="card-title" style="color:#ff7b72;">港の掃除 (RESET)</div>
-            <p style="font-size:0.7rem; color:#8b949e;">※全ての資産と記録を初期化し、512バイトの純粋な状態に戻します。</p>
             <button class="btn btn-danger" onclick="executeClean()">港を掃除する (EXECUTE CLEAN)</button>
         </div>
     </section>
 </main>
 <script>
 const COLOR_SYSTEM = ["PURE","USD","JPY","EUR","BTC","ETH","MATIC","N","W","J","bps","bit","byte","BOOT","Solidity","STORAGE","index.html",".bin",".js",".css",".json","Unicode","AI_CORE","THOUGHT","PROMPT","GEN_DATA","SWIFT","KOTLIN","FONT_CORE","GLYPH","KERNING","BIOLOGY","ESTHETICS","QUALIA"];
-let studio = { z: 0.05, w: 0.0, ports: { warehouse: {}, export: {}, import: {} } };
+let studio = { z: 0.05, w: 0.0, ports: { warehouse: {}, export: {}, import: {} }, logs: [] };
 
-function init() { COLOR_SYSTEM.forEach(c => { studio.ports.warehouse[c] = 0; studio.ports.export[c] = 0; studio.ports.import[c] = 0; }); }
+function init() { COLOR_SYSTEM.forEach(c => { studio.ports.warehouse[c] = 0; studio.ports.export[c] = 0; studio.ports.import[c] = 0; }); studio.logs = ["PORT INITIALIZED"]; }
 function save() { localStorage.setItem('TR_PORT_A_CORE', JSON.stringify(studio)); }
 function load() { const data = JSON.parse(localStorage.getItem('TR_PORT_A_CORE')); if (data) studio = data; else init(); render(); }
+
+function addLog(msg) {
+    const now = new Date().toLocaleTimeString();
+    studio.logs.unshift(`[${now}] ${msg}`);
+    if(studio.logs.length > 50) studio.logs.pop();
+}
 
 function render() {
     renderGrid('total-display', studio.ports.warehouse, studio.ports.export, studio.ports.import);
@@ -94,6 +104,7 @@ function render() {
     document.getElementById('import-manifest').innerHTML = inc ? "[捕捉] シグナル検知" : "待機なし";
     document.getElementById('z-val').textContent = studio.z.toFixed(4);
     document.getElementById('w-val').textContent = studio.w.toFixed(4);
+    document.getElementById('port-log').innerHTML = studio.logs.join('<br>');
 }
 
 function renderGrid(id, w, e = null, i = null) {
@@ -107,7 +118,7 @@ function vanningAction() {
     const unit = document.getElementById('color-choice').value; 
     const amount = parseFloat(document.getElementById('brush-intensity').value); 
     studio.ports.warehouse[unit] = (studio.ports.warehouse[unit] || 0) + amount; 
-    studio.z += 0.0001; save(); render(); 
+    studio.z += 0.0001; addLog(`VANNING: ${amount} ${unit}`); save(); render(); 
 }
 
 function transportAction() { 
@@ -115,7 +126,8 @@ function transportAction() {
     const amount = parseFloat(document.getElementById('brush-intensity').value); 
     if((studio.ports.warehouse[unit] || 0) >= amount) { 
         studio.ports.warehouse[unit] -= amount; 
-        studio.ports.export[unit] = (studio.ports.export[unit] || 0) + amount; save(); render(); 
+        studio.ports.export[unit] = (studio.ports.export[unit] || 0) + amount; 
+        addLog(`READY TO EXPORT: ${amount} ${unit}`); save(); render(); 
     } 
 }
 
@@ -124,20 +136,23 @@ function sailingAction() {
     const amount = studio.ports.export[unit]; 
     if(amount > 0) { 
         localStorage.setItem('TR_Bridge_to_PORT_B', JSON.stringify({unit, amount, from:"PORT_A"})); 
-        studio.ports.export[unit] = 0; studio.w += 0.0001; save(); render(); 
+        studio.ports.export[unit] = 0; studio.w += 0.0001; 
+        addLog(`SAILED TO PORT B: ${amount} ${unit}`); save(); render(); 
     } 
 }
 
 function arrivalAction() { 
     const inc = JSON.parse(localStorage.getItem('TR_Bridge_to_PORT_A')); 
     if(inc) { 
-        studio.ports.import[inc.unit] = (studio.ports.import[inc.unit] || 0) + inc.amount; localStorage.removeItem('TR_Bridge_to_PORT_A'); save(); render(); 
+        studio.ports.import[inc.unit] = (studio.ports.import[inc.unit] || 0) + inc.amount; 
+        addLog(`ARRIVAL FROM PORT B: ${inc.amount} ${inc.unit}`);
+        localStorage.removeItem('TR_Bridge_to_PORT_A'); save(); render(); 
     } 
 }
 
 function devanningAction() { 
     COLOR_SYSTEM.forEach(c => { studio.ports.warehouse[c] = (studio.ports.warehouse[c] || 0) + (studio.ports.import[c] || 0); studio.ports.import[c] = 0; }); 
-    save(); render(); 
+    addLog(`DEVANNING COMPLETE`); save(); render(); 
 }
 
 function showPane(id) { 
@@ -147,7 +162,7 @@ function showPane(id) {
     document.getElementById('tab-' + id).classList.add('active');
 }
 
-function updateLabels() { /* 言語切替拡張用 */ }
+function updateLabels() { /* 拡張用 */ }
 function executeClean() { if(confirm("初期化しますか？")) { localStorage.clear(); location.reload(); } }
 
 const sel = document.getElementById('color-choice'); 
