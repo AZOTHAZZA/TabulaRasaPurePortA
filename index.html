@@ -16,9 +16,9 @@ nav { display: flex; background: #000; border-bottom: 1px solid #333; }
 .pane.active { display: block; }
 .card { background: var(--surface); border-radius: 10px; border: 1px solid var(--border); padding: 15px; margin-bottom: 15px; }
 .card-title { font-size: 0.6rem; font-weight: 700; color: #768390; margin-bottom: 10px; text-transform: uppercase; border-left: 3px solid var(--accent); padding-left: 10px; }
-.grid-mini { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 6px; }
+.grid-mini { display: grid; grid-template-columns: repeat(auto-fit, minmax(75px, 1fr)); gap: 6px; }
 .data-node { background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 5px; border-radius: 4px; text-align: center; }
-.label { font-size: 0.55rem; color: #768390; overflow: hidden; text-overflow: ellipsis; }
+.label { font-size: 0.5rem; color: #768390; }
 .value { font-family: monospace; font-weight: bold; font-size: 0.7rem; color: #00ff00; }
 .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.75rem; margin-top: 5px; }
 .btn-neutral { background: var(--accent); color: #fff; }
@@ -31,11 +31,17 @@ input, select { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px soli
 <header>
     <div class="brand">PURE PORT A</div>
     <div style="display:flex; gap:10px; align-items:center;">
+        <select id="ui-lang" style="width:auto; margin-bottom:0; font-size: 0.6rem;" onchange="updateLabels()">
+            <option value="jp">JP</option><option value="en">EN</option>
+        </select>
         <a href="https://azothazza.github.io/TabulaRasaPurePortB/" class="btn-bridge" style="text-decoration:none; padding:5px 10px; font-size:0.6rem;">JUMP B</a>
-        <button class="btn-bridge" style="width:auto; padding:5px 10px;" onclick="location.reload()">SYNC</button>
+        <button class="btn-bridge" style="width:auto; padding:5px 10px; margin-top:0;" onclick="location.reload()">SYNC</button>
     </div>
 </header>
-<nav><button class="tab active" onclick="showPane('canvas')">港 A</button><button class="tab" onclick="showPane('status')">状態 / 掃除</button></nav>
+<nav>
+    <button class="tab active" id="tab-canvas" onclick="showPane('canvas')">港 A</button>
+    <button class="tab" id="tab-status" onclick="showPane('status')">状態 / 掃除</button>
+</nav>
 <main id="viewport">
     <section id="pane-canvas" class="pane active">
         <div class="card"><div class="card-title">全 34 資産 (TOTAL)</div><div class="grid-mini" id="total-display"></div></div>
@@ -58,6 +64,20 @@ input, select { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px soli
             <button class="btn btn-bridge" onclick="devanningAction()">積み下ろし</button>
         </div>
     </section>
+    <section id="pane-status" class="pane">
+        <div class="card">
+            <div class="card-title">物理状態 (z/w)</div>
+            <div class="grid-mini">
+                <div class="data-node"><div class="label">z-Status</div><div class="value" id="z-val">0.0500</div></div>
+                <div class="data-node"><div class="label">w-Status</div><div class="value" id="w-val">0.0000</div></div>
+            </div>
+        </div>
+        <div class="card" style="border: 2px solid #a71d2a;">
+            <div class="card-title" style="color:#ff7b72;">港の掃除 (RESET)</div>
+            <p style="font-size:0.7rem; color:#8b949e;">※全ての資産と記録を初期化し、512バイトの純粋な状態に戻します。</p>
+            <button class="btn btn-danger" onclick="executeClean()">港を掃除する (EXECUTE CLEAN)</button>
+        </div>
+    </section>
 </main>
 <script>
 const COLOR_SYSTEM = ["PURE","USD","JPY","EUR","BTC","ETH","MATIC","N","W","J","bps","bit","byte","BOOT","Solidity","STORAGE","index.html",".bin",".js",".css",".json","Unicode","AI_CORE","THOUGHT","PROMPT","GEN_DATA","SWIFT","KOTLIN","FONT_CORE","GLYPH","KERNING","BIOLOGY","ESTHETICS","QUALIA"];
@@ -66,24 +86,30 @@ let studio = { z: 0.05, w: 0.0, ports: { warehouse: {}, export: {}, import: {} }
 function init() { COLOR_SYSTEM.forEach(c => { studio.ports.warehouse[c] = 0; studio.ports.export[c] = 0; studio.ports.import[c] = 0; }); }
 function save() { localStorage.setItem('TR_PORT_A_CORE', JSON.stringify(studio)); }
 function load() { const data = JSON.parse(localStorage.getItem('TR_PORT_A_CORE')); if (data) studio = data; else init(); render(); }
+
 function render() {
     renderGrid('total-display', studio.ports.warehouse, studio.ports.export, studio.ports.import);
     renderGrid('export-display', studio.ports.export);
     const inc = localStorage.getItem('TR_Bridge_to_PORT_A');
     document.getElementById('import-manifest').innerHTML = inc ? "[捕捉] シグナル検知" : "待機なし";
+    document.getElementById('z-val').textContent = studio.z.toFixed(4);
+    document.getElementById('w-val').textContent = studio.w.toFixed(4);
 }
+
 function renderGrid(id, w, e = null, i = null) {
     document.getElementById(id).innerHTML = COLOR_SYSTEM.map(c => {
-        const val = (w[c] || 0) + (e ? (e[c] || 0) : 0) + (i ? (i[i] || 0) : 0);
+        const val = (w[c] || 0) + (e ? (e[c] || 0) : 0) + (i ? (i[c] || 0) : 0);
         return `<div class="data-node"><div class="label">${c}</div><div class="value">${val.toLocaleString()}</div></div>`;
     }).join('');
 }
+
 function vanningAction() { 
     const unit = document.getElementById('color-choice').value; 
     const amount = parseFloat(document.getElementById('brush-intensity').value); 
     studio.ports.warehouse[unit] = (studio.ports.warehouse[unit] || 0) + amount; 
-    save(); render(); 
+    studio.z += 0.0001; save(); render(); 
 }
+
 function transportAction() { 
     const unit = document.getElementById('color-choice').value; 
     const amount = parseFloat(document.getElementById('brush-intensity').value); 
@@ -92,25 +118,37 @@ function transportAction() {
         studio.ports.export[unit] = (studio.ports.export[unit] || 0) + amount; save(); render(); 
     } 
 }
+
 function sailingAction() { 
     const unit = document.getElementById('color-choice').value; 
     const amount = studio.ports.export[unit]; 
     if(amount > 0) { 
         localStorage.setItem('TR_Bridge_to_PORT_B', JSON.stringify({unit, amount, from:"PORT_A"})); 
-        studio.ports.export[unit] = 0; save(); render(); 
+        studio.ports.export[unit] = 0; studio.w += 0.0001; save(); render(); 
     } 
 }
+
 function arrivalAction() { 
     const inc = JSON.parse(localStorage.getItem('TR_Bridge_to_PORT_A')); 
     if(inc) { 
         studio.ports.import[inc.unit] = (studio.ports.import[inc.unit] || 0) + inc.amount; localStorage.removeItem('TR_Bridge_to_PORT_A'); save(); render(); 
     } 
 }
+
 function devanningAction() { 
     COLOR_SYSTEM.forEach(c => { studio.ports.warehouse[c] = (studio.ports.warehouse[c] || 0) + (studio.ports.import[c] || 0); studio.ports.import[c] = 0; }); 
     save(); render(); 
 }
-function showPane(id) { document.querySelectorAll('.pane').forEach(p => p.classList.remove('active')); document.getElementById('pane-' + id).classList.add('active'); }
+
+function showPane(id) { 
+    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active')); 
+    document.getElementById('pane-' + id).classList.add('active'); 
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+}
+
+function updateLabels() { /* 言語切替拡張用 */ }
+function executeClean() { if(confirm("初期化しますか？")) { localStorage.clear(); location.reload(); } }
 
 const sel = document.getElementById('color-choice'); 
 COLOR_SYSTEM.forEach(c => sel.add(new Option(c, c)));
