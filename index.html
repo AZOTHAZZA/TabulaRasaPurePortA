@@ -20,51 +20,59 @@ nav { display: flex; background: #000; border-bottom: 1px solid #333; }
 .data-node { background: rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 5px; border-radius: 4px; text-align: center; }
 .label { font-size: 0.5rem; color: #768390; }
 .value { font-family: monospace; font-weight: bold; font-size: 0.7rem; color: #00ff00; }
-.btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.75rem; margin-top: 5px; }
+.btn { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.7rem; margin-top: 5px; }
 .btn-neutral { background: var(--accent); color: #fff; }
-.btn-danger { background: #a71d2a; color: #fff; }
 .btn-bridge { background: #4a3f35; color: #d4a017; border: 1px solid #d4a017; }
-input, select { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #444; border-radius: 6px; background: #000; color: #fff; }
-#port-log { font-family: 'Courier New', monospace; font-size: 0.6rem; height: 120px; overflow-y: auto; background: #000; padding: 8px; color: #8b949e; border: 1px solid var(--border); line-height: 1.4; }
+input, select { width: 100%; padding: 8px; margin-bottom: 5px; border: 1px solid #444; border-radius: 4px; background: #000; color: #fff; font-size: 0.7rem; }
+#port-log { font-family: 'Courier New', monospace; font-size: 0.6rem; height: 100px; overflow-y: auto; background: #000; padding: 8px; color: #8b949e; border: 1px solid var(--border); line-height: 1.4; }
 </style>
 </head>
 <body>
 <header>
     <div class="brand">PURE PORT A</div>
-    <div style="display:flex; gap:10px; align-items:center;">
-        <select id="ui-lang" style="width:auto; margin-bottom:0; font-size: 0.6rem;" onchange="updateLabels()">
-            <option value="jp">JP</option><option value="en">EN</option>
-        </select>
+    <div style="display:flex; gap:10px;">
         <a href="https://azothazza.github.io/TabulaRasaPurePortB/" class="btn-bridge" style="text-decoration:none; padding:5px 10px; font-size:0.6rem;">JUMP B</a>
-        <button class="btn-bridge" style="width:auto; padding:5px 10px; margin-top:0;" onclick="location.reload()">SYNC</button>
+        <button class="btn-bridge" style="width:auto; padding:5px 10px;" onclick="location.reload()">SYNC</button>
     </div>
 </header>
 <nav>
-    <button class="tab active" id="tab-canvas" onclick="showPane('canvas')">港 A</button>
-    <button class="tab" id="tab-status" onclick="showPane('status')">状態 / 掃除</button>
+    <button class="tab active" onclick="showPane('canvas')">港務 A</button>
+    <button class="tab" onclick="showPane('status')">状態・司令</button>
 </nav>
 <main id="viewport">
     <section id="pane-canvas" class="pane active">
         <div class="card"><div class="card-title">全 34 資産 (TOTAL)</div><div class="grid-mini" id="total-display"></div></div>
-        <div class="card">
-            <div class="card-title">倉庫 (WAREHOUSE)</div>
-            <select id="color-choice"></select>
-            <input type="number" id="brush-intensity" value="1000000000" step="1000000">
-            <button class="btn btn-neutral" onclick="vanningAction()">積み込み (VANNING)</button>
-            <button class="btn btn-bridge" onclick="transportAction()">輸出準備へ移動 (READY)</button>
+        
+        <div class="card" style="border: 1px solid #d4a017;">
+            <div class="card-title" style="color:#d4a017;">自動航海司令 (AUTO-SAILING COMMAND)</div>
+            <div style="font-size:0.55rem; color:#8b949e; margin-bottom:5px;">対象資産: <span id="auto-focus" style="color:#00ff00;">PURE</span></div>
+            <div class="grid-mini" style="grid-template-columns: 1fr 1fr;">
+                <input type="number" id="auto-thresh" placeholder="発動閾値" value="100000000">
+                <input type="number" id="auto-batch" placeholder="積載量" value="10000000">
+            </div>
+            <div style="display:flex; gap:5px;">
+                <button class="btn btn-bridge" style="flex:2;" onclick="applyAuto()">設定適用</button>
+                <button class="btn btn-neutral" style="flex:1;" onclick="toggleAuto()">ALL ON/OFF</button>
+            </div>
         </div>
+
         <div class="card">
-            <div class="card-title">輸出 (EXPORT) ➔ TO PORT B</div>
-            <div class="grid-mini" id="export-display"></div>
-            <button class="btn btn-bridge" onclick="sailingAction()">手動出港 (Sailing to B)</button>
+            <div class="card-title">手動倉庫 (WAREHOUSE)</div>
+            <select id="color-choice" onchange="document.getElementById('auto-focus').innerText=this.value"></select>
+            <input type="number" id="brush-intensity" value="1000000000">
+            <button class="btn btn-neutral" onclick="vanningAction()">積み込み</button>
+            <button class="btn btn-bridge" onclick="transportAction()">輸出準備へ移動</button>
+            <button class="btn btn-bridge" onclick="sailingAction()">手動出港 (➔ B)</button>
         </div>
+
         <div class="card">
-            <div class="card-title">輸入 (IMPORT) ➔ FROM PORT B</div>
-            <div id="import-manifest" style="font-family:monospace; font-size:0.7rem; padding:10px; background:#000; margin-bottom:10px;">待機なし</div>
-            <button class="btn btn-neutral" onclick="arrivalAction()">入港承認 (ARRIVAL)</button>
-            <button class="btn btn-bridge" onclick="devanningAction()">積み下ろし (DEVANNING)</button>
+            <div class="card-title">輸入承認 (IMPORT FROM B)</div>
+            <div id="import-manifest" style="font-family:monospace; font-size:0.65rem; padding:8px; background:#000; margin-bottom:5px;">待機なし</div>
+            <button class="btn btn-neutral" onclick="arrivalAction()">入港承認</button>
+            <button class="btn btn-bridge" onclick="devanningAction()">積み下ろし</button>
         </div>
     </section>
+
     <section id="pane-status" class="pane">
         <div class="card">
             <div class="card-title">物理状態 (z/w)</div>
@@ -73,122 +81,116 @@ input, select { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px soli
                 <div class="data-node"><div class="label">w-Status</div><div class="value" id="w-val">0</div></div>
             </div>
         </div>
-        <div class="card">
-            <div class="card-title">航海日誌 (PORT LOG)</div>
-            <div id="port-log"></div>
-        </div>
-        <div class="card" style="border: 2px solid #a71d2a;">
-            <div class="card-title" style="color:#ff7b72;">港の掃除 (RESET)</div>
-            <button class="btn btn-danger" onclick="executeClean()">港を掃除する (EXECUTE CLEAN)</button>
-        </div>
+        <div class="card"><div class="card-title">航海日誌</div><div id="port-log"></div></div>
+        <button class="btn btn-danger" onclick="executeClean()">港の掃除 (RESET)</button>
     </section>
 </main>
+
 <script>
 const COLOR_SYSTEM = ["PURE","USD","JPY","EUR","BTC","ETH","MATIC","N","W","J","bps","bit","byte","BOOT","Solidity","STORAGE","index.html",".bin",".js",".css",".json","Unicode","AI_CORE","THOUGHT","PROMPT","GEN_DATA","SWIFT","KOTLIN","FONT_CORE","GLYPH","KERNING","BIOLOGY","ESTHETICS","QUALIA"];
-let studio = { z: 0.05, w: 0.0, ports: { warehouse: {}, export: {}, import: {} }, logs: [] };
+let studio = { z: 0.05, w: 0.0, ports: { warehouse: {}, export: {}, import: {} }, autoConfig: {}, logs: [] };
+let globalAuto = true;
 
-function init() { COLOR_SYSTEM.forEach(c => { studio.ports.warehouse[c] = 0; studio.ports.export[c] = 0; studio.ports.import[c] = 0; }); studio.logs = ["PORT INITIALIZED"]; }
+function init() { 
+    COLOR_SYSTEM.forEach(c => { 
+        studio.ports.warehouse[c] = 0; studio.ports.export[c] = 0; studio.ports.import[c] = 0; 
+        studio.autoConfig[c] = { enabled: false, thresh: 100000000, batch: 10000000 };
+    }); 
+    studio.logs = ["PORT A INITIALIZED"]; 
+}
 function save() { localStorage.setItem('TR_PORT_A_CORE', JSON.stringify(studio)); }
 function load() { const data = JSON.parse(localStorage.getItem('TR_PORT_A_CORE')); if (data) studio = data; else init(); render(); }
 
 function addLog(msg) {
     const now = new Date().toLocaleTimeString();
     studio.logs.unshift(`[${now}] ${msg}`);
-    if(studio.logs.length > 50) studio.logs.pop();
+    if(studio.logs.length > 30) studio.logs.pop();
 }
 
 function render() {
-    renderGrid('total-display', studio.ports.warehouse, studio.ports.export, studio.ports.import);
-    renderGrid('export-display', studio.ports.export);
+    document.getElementById('total-display').innerHTML = COLOR_SYSTEM.map(c => `<div class="data-node"><div class="label">${c}</div><div class="value">${((studio.ports.warehouse[c]||0)+(studio.ports.import[c]||0)).toLocaleString()}</div></div>`).join('');
     const inc = localStorage.getItem('TR_Bridge_to_PORT_A');
-    document.getElementById('import-manifest').innerHTML = inc ? "[捕捉] シグナル検知" : "待機なし";
+    document.getElementById('import-manifest').innerHTML = inc ? "📩 信号検知: Port Bより受電" : "待機なし";
     document.getElementById('z-val').textContent = studio.z.toFixed(4);
     document.getElementById('w-val').textContent = studio.w.toFixed(4);
     document.getElementById('port-log').innerHTML = studio.logs.join('<br>');
 }
 
-function renderGrid(id, w, e = null, i = null) {
-    document.getElementById(id).innerHTML = COLOR_SYSTEM.map(c => {
-        const val = (w[c] || 0) + (e ? (e[c] || 0) : 0) + (i ? (i[c] || 0) : 0);
-        return `<div class="data-node"><div class="label">${c}</div><div class="value">${val.toLocaleString()}</div></div>`;
-    }).join('');
-}
-
-// --- Original Logical Actions ---
+// Actions
 function vanningAction() {
     const unit = document.getElementById('color-choice').value;
     const amount = parseFloat(document.getElementById('brush-intensity').value);
     studio.ports.warehouse[unit] = (studio.ports.warehouse[unit] || 0) + amount;
-    studio.z += 0.0001; addLog(`VANNING: ${amount.toLocaleString()} ${unit}`); save(); render();
+    studio.z += 0.0001; addLog(`VANNING: ${amount} ${unit}`); save(); render();
 }
-
 function transportAction() {
     const unit = document.getElementById('color-choice').value;
     const amount = parseFloat(document.getElementById('brush-intensity').value);
     if((studio.ports.warehouse[unit] || 0) >= amount) {
         studio.ports.warehouse[unit] -= amount;
         studio.ports.export[unit] = (studio.ports.export[unit] || 0) + amount;
-        addLog(`READY TO EXPORT: ${amount.toLocaleString()} ${unit}`); save(); render();
+        addLog(`READY: ${amount} ${unit}`); save(); render();
     }
 }
-
 function sailingAction() {
     const unit = document.getElementById('color-choice').value;
     const amount = studio.ports.export[unit];
     if(amount > 0) {
-        localStorage.setItem('TR_Bridge_to_PORT_B', JSON.stringify({unit, amount, from:"PORT_A", ts: Date.now()}));
+        localStorage.setItem('TR_Bridge_to_PORT_B', JSON.stringify({unit, amount, from:"PORT_A"}));
         studio.ports.export[unit] = 0; studio.w += 0.0001;
-        addLog(`SAILED TO PORT B: ${amount.toLocaleString()} ${unit}`); save(); render();
+        addLog(`SAILED: ${amount} ${unit} to B`); save(); render();
     }
 }
-
 function arrivalAction() {
     const inc = JSON.parse(localStorage.getItem('TR_Bridge_to_PORT_A'));
     if(inc) {
         studio.ports.import[inc.unit] = (studio.ports.import[inc.unit] || 0) + inc.amount;
-        addLog(`ARRIVAL FROM PORT B: ${inc.amount.toLocaleString()} ${inc.unit}`);
+        addLog(`ARRIVAL: ${inc.amount} ${inc.unit} from B`);
         localStorage.removeItem('TR_Bridge_to_PORT_A'); save(); render();
     }
 }
-
 function devanningAction() {
     COLOR_SYSTEM.forEach(c => { studio.ports.warehouse[c] = (studio.ports.warehouse[c] || 0) + (studio.ports.import[c] || 0); studio.ports.import[c] = 0; });
     addLog(`DEVANNING COMPLETE`); save(); render();
 }
 
-// --- Autonomous Protocols (Panta Rhei) ---
+// Auto System
+function applyAuto() {
+    const unit = document.getElementById('color-choice').value;
+    studio.autoConfig[unit].enabled = true;
+    studio.autoConfig[unit].thresh = parseFloat(document.getElementById('auto-thresh').value);
+    studio.autoConfig[unit].batch = parseFloat(document.getElementById('auto-batch').value);
+    addLog(`AUTO SET: ${unit}`); save();
+}
+function toggleAuto() { globalAuto = !globalAuto; addLog(`GLOBAL AUTO: ${globalAuto}`); }
+
 function pantaRhei() {
-    // 1. 自動生成
-    const growth = Math.floor(studio.z * 1000); 
-    studio.ports.warehouse["PURE"] = (studio.ports.warehouse["PURE"] || 0) + growth;
+    // 根源生成
+    studio.ports.warehouse["PURE"] = (studio.ports.warehouse["PURE"] || 0) + Math.floor(studio.z * 1000);
+    
+    // 自動入港承認 & 自動出港
+    const inc = JSON.parse(localStorage.getItem('TR_Bridge_to_PORT_A'));
+    if(inc) arrivalAction(); // 自動で入港承認まで実行
 
-    // 2. 自動出港 (1億溜まったら自動でBridgeへ放出)
-    if (studio.ports.warehouse["PURE"] > 100000000) {
-        const autoAmount = 10000000;
-        studio.ports.warehouse["PURE"] -= autoAmount;
-        localStorage.setItem('TR_Bridge_to_PORT_B', JSON.stringify({unit: "PURE", amount: autoAmount, from: "PORT_A", ts: Date.now()}));
-        studio.w += 0.0002;
-        addLog(`AUTO-SAILING: ${autoAmount.toLocaleString()} PURE dispatched`);
+    if(globalAuto) {
+        COLOR_SYSTEM.forEach(c => {
+            const cfg = studio.autoConfig[c];
+            if(cfg && cfg.enabled && (studio.ports.warehouse[c]||0) >= cfg.thresh) {
+                studio.ports.warehouse[c] -= cfg.batch;
+                localStorage.setItem('TR_Bridge_to_PORT_B', JSON.stringify({unit:c, amount:cfg.batch, from:"PORT_A"}));
+                addLog(`AUTO-SAIL: ${cfg.batch} ${c}`);
+            }
+        });
     }
-
-    studio.z += Math.sin(Date.now() / 5000) * 0.0001;
     render(); save();
 }
 
-function showPane(id) {
-    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
-    document.getElementById('pane-' + id).classList.add('active');
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.getElementById('tab-' + id).classList.add('active');
-}
-
-function updateLabels() { /* Extension placeholder */ }
-function executeClean() { if(confirm("初期化しますか？")) { localStorage.clear(); location.reload(); } }
-
 const sel = document.getElementById('color-choice');
 COLOR_SYSTEM.forEach(c => sel.add(new Option(c, c)));
-setInterval(pantaRhei, 2000); // 執行
+setInterval(pantaRhei, 2000);
 document.addEventListener('DOMContentLoaded', load);
+function showPane(id) { document.querySelectorAll('.pane').forEach(p => p.classList.remove('active')); document.getElementById('pane-'+id).classList.add('active'); }
+function executeClean() { if(confirm("RESET?")) { localStorage.clear(); location.reload(); } }
 </script>
 </body>
 </html>
