@@ -163,7 +163,14 @@ function showPane(id) {
 }
 
 function updateLabels() { /* 拡張用 */ }
-function executeClean() { if(confirm("初期化しますか？")) { localStorage.clear(); location.reload(); } }
+function executeClean() { 
+    if(confirm("港の内部（倉庫・日誌）のみをリセットしますか？ ※輸送中の荷物は保持されます。")) { 
+        // 全データを消すのではなく、現在の studio (港の状態) だけを初期化
+        init(); 
+        save(); 
+        location.reload(); 
+    } 
+}
 
 const sel = document.getElementById('color-choice'); 
 COLOR_SYSTEM.forEach(c => sel.add(new Option(c, c)));
