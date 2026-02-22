@@ -1,0 +1,4 @@
+--- PURE PROTOCOL ---
+ID: 3
+Body: 1.618
+Content: External input synchronized at 1.155 frequency.

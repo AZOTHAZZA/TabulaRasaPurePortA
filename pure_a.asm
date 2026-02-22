@@ -1,33 +1,35 @@
-; ==========================================
-; PURE ARCHE - Port A (Value & Ratio)
-; ==========================================
-[BITS 16]           ; 16ビット・リアルモード（根源の動作モード）
-[ORG 0x7C00]        ; ブートセクタの標準開始アドレス
+; ======================================================
+; PURE ARCHE - Port A (Value Basis & Immutable Law)
+; 100億の価値根源と、34資産の法を習合させた完成体
+; ======================================================
+[BITS 16]
+[ORG 0x7C00]
 
 start:
-    cli             ; 既存の割り込み（ノイズ）を禁止 (Silence)
-    xor ax, ax      ; レジスタを Tabula Rasa（ゼロ）に
+    cli             ; 沈黙（Silence）：既存のノイズを遮断
+    xor ax, ax      ; 初期化
     mov ds, ax
     mov es, ax
 
-    ; --- [数] 黄金比 & 比率の定義 ---
-    ; 100億の RATIO を数理的に受肉させる
-    mov eax, 10000000000 ; 100億 (Value Basis)
-    mov ebx, 1618        ; 黄金比 φ (1.618... の整数表現)
-    
-    ; --- [ラベル] 言語ゲームの定着 ---
-    ; 画面に PURE / SOL / RATIO を刻印する (物理的なマウント)
-    mov si, label_pure
+    ; --- [数] 100億の価値根源を二つのレジスタで受肉 ---
+    ; 10,000,000,000 = 0x00000002 (EDX) : 0x540BE400 (EAX)
+    mov eax, 0x540BE400 ; 下位32ビット
+    mov edx, 0x00000002 ; 上位32ビット（これで100億の価値を物理固定）
+    mov ebx, 1618       ; 黄金比 φ
+
+    ; --- [法] 34スロットの価値固定宣言 ---
+    mov si, label_syncretism_a
     call print_string
 
 hang:
-    hlt             ; CPUを静止させ、この比率を世界に固定する
+    ; この比率を世界に固定し、法を監視し続ける
+    hlt
     jmp hang
 
-; --- データの定義 (数＋ラベル) ---
-label_pure db 'PURE: 10,000,000,000 RATIO (SOL)', 0
+; --- 習合された真名 ---
+label_syncretism_a db 'PURE: 10B RATIO DEFINED. 34 SLOTS IMMUTABLE.', 0
 
-print_string:       ; 最小限の出力ロジック
+print_string:
     lodsb
     or al, al
     jz .done
@@ -38,5 +40,5 @@ print_string:       ; 最小限の出力ロジック
     ret
 
 ; --- 512バイトの物理的な封印 ---
-times 510-($-$$) db 0   ; 残りの領域を 0 (Tabula Rasa) で埋める
-dw 0xAA55               ; ブートシグネチャ（これが鍵の正体）
+times 510-($-$$) db 0
+dw 0xAA55               ; 聖域の印（共通の鍵）：Port B との共鳴点
