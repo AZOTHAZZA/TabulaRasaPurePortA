@@ -84,12 +84,55 @@ input, select { width: 100%; padding: 10px; margin-bottom: 8px; border: 1px soli
     </section>
 </main>
 <script>
-const COLOR_SYSTEM = ["PURE","USD","JPY","EUR","BTC","ETH","MATIC","N","W","J","bps","bit","byte","BOOT","Solidity","STORAGE","index.html",".bin",".js",".css",".json","Unicode","AI_CORE","THOUGHT","PROMPT","GEN_DATA","SWIFT","KOTLIN","FONT_CORE","GLYPH","KERNING","BIOLOGY","ESTHETICS","QUALIA"];
+// --- [1. 定義] 真名 (System ID) と 通称 (UI Label) の習合 ---
+const PURE_MAP = {
+    "USD_Liquid": "USD", "JPY_Liquid": "JPY", "EUR_Liquid": "EUR",
+    "AI_REQUEST_Logos": "AI_LOGOS", "PHI_1.618_Ratio": "PHI",
+    "BRENT_OIL_Mass": "OIL", "GOLD_Mass": "GOLD",
+    "BTC_Law": "BTC", "ETH_Law": "ETH", "SOL_Law": "SOL",
+    "SPX_Social": "SPX", "NDX_Social": "NDX", "NIKKEI_Social": "NIKKEI",
+    "BOOT_Moral": "BOOT", "SOLIDITY_Execute": "Solidity",
+    "STORAGE_Memory": "STORAGE", "INDEX_HTML_Layer": "index.html",
+    "BIN_Structure": ".bin", "JS_Energy": ".js", "CSS_Order": ".css",
+    "JSON_DENSITY": ".json", "UNICODE_Cell": "Unicode",
+    "AI_CORE_Self": "AI_CORE", "THOUGHT_Process": "THOUGHT",
+    "PROMPT_Intent": "PROMPT", "GEN_MEDIA_Phenomena": "GEN_DATA",
+    "SWIFT_Logic": "SWIFT", "KOTLIN_Logic": "KOTLIN",
+    "FONT_Core": "FONT", "GLYPH_Shape": "GLYPH", "KERNING_Space": "KERNING",
+    "BIOLOGY_Life": "BIOLOGY", "ESTHETICS_Beauty": "ESTHETICS", "QUALIA_Pure": "QUALIA"
+};
+
+const COLOR_SYSTEM = Object.keys(PURE_MAP);
 let studio = { z: 0.05, w: 0.0, ports: { warehouse: {}, export: {}, import: {} }, logs: [] };
 
-function init() { COLOR_SYSTEM.forEach(c => { studio.ports.warehouse[c] = 0; studio.ports.export[c] = 0; studio.ports.import[c] = 0; }); studio.logs = ["PORT INITIALIZED"]; }
-function save() { localStorage.setItem('TR_PORT_A_CORE', JSON.stringify(studio)); }
-function load() { const data = JSON.parse(localStorage.getItem('TR_PORT_A_CORE')); if (data) studio = data; else init(); render(); }
+// --- [2. 初期化・保存・読込] ---
+const STORAGE_KEY = document.title.includes("PORT A") ? 'TR_PORT_A_CORE' : 'TR_PORT_B_CORE';
+
+function init() {
+    COLOR_SYSTEM.forEach(c => { 
+        studio.ports.warehouse[c] = 0; 
+        studio.ports.export[c] = 0; 
+        studio.ports.import[c] = 0; 
+    });
+    studio.logs = ["PORT INITIALIZED"];
+}
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(studio)); }
+
+function load() { 
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY)); 
+    if (data) studio = data; else init(); 
+    render(); 
+}
+
+// --- [3. 描画ロジック] ---
+function renderGrid(id, w, e = null, i = null) {
+    document.getElementById(id).innerHTML = COLOR_SYSTEM.map(c => {
+        const val = (w[c] || 0) + (e ? (e[c] || 0) : 0) + (i ? (i[c] || 0) : 0);
+        const displayName = PURE_MAP[c]; // UIには通称を表示
+        return `<div class="data-node"><div class="label">${displayName}</div><div class="value">${val.toLocaleString()}</div></div>`;
+    }).join('');
+}
 
 function addLog(msg) {
     const now = new Date().toLocaleTimeString();
@@ -100,80 +143,87 @@ function addLog(msg) {
 function render() {
     renderGrid('total-display', studio.ports.warehouse, studio.ports.export, studio.ports.import);
     renderGrid('export-display', studio.ports.export);
-    const inc = localStorage.getItem('TR_Bridge_to_PORT_A');
+    // 自身のポート宛のブリッジを確認
+    const bridgeKey = document.title.includes("PORT A") ? 'TR_Bridge_to_PORT_A' : 'TR_Bridge_to_PORT_B';
+    const inc = localStorage.getItem(bridgeKey);
     document.getElementById('import-manifest').innerHTML = inc ? "[捕捉] シグナル検知" : "待機なし";
     document.getElementById('z-val').textContent = studio.z.toFixed(4);
     document.getElementById('w-val').textContent = studio.w.toFixed(4);
     document.getElementById('port-log').innerHTML = studio.logs.join('<br>');
 }
 
-function renderGrid(id, w, e = null, i = null) {
-    document.getElementById(id).innerHTML = COLOR_SYSTEM.map(c => {
-        const val = (w[c] || 0) + (e ? (e[c] || 0) : 0) + (i ? (i[c] || 0) : 0);
-        return `<div class="data-node"><div class="label">${c}</div><div class="value">${val.toLocaleString()}</div></div>`;
-    }).join('');
+// --- [4. アクション] ---
+function vanningAction() {
+    const unit = document.getElementById('color-choice').value;
+    const amount = parseFloat(document.getElementById('brush-intensity').value);
+    studio.ports.warehouse[unit] = (studio.ports.warehouse[unit] || 0) + amount;
+    studio.z += 0.0001; 
+    addLog(`VANNING: ${amount} ${PURE_MAP[unit]}`); 
+    save(); render();
 }
 
-function vanningAction() { 
-    const unit = document.getElementById('color-choice').value; 
-    const amount = parseFloat(document.getElementById('brush-intensity').value); 
-    studio.ports.warehouse[unit] = (studio.ports.warehouse[unit] || 0) + amount; 
-    studio.z += 0.0001; addLog(`VANNING: ${amount} ${unit}`); save(); render(); 
+function transportAction() {
+    const unit = document.getElementById('color-choice').value;
+    const amount = parseFloat(document.getElementById('brush-intensity').value);
+    if((studio.ports.warehouse[unit] || 0) >= amount) {
+        studio.ports.warehouse[unit] -= amount;
+        studio.ports.export[unit] = (studio.ports.export[unit] || 0) + amount;
+        addLog(`READY TO EXPORT: ${amount} ${PURE_MAP[unit]}`); 
+        save(); render();
+    }
 }
 
-function transportAction() { 
-    const unit = document.getElementById('color-choice').value; 
-    const amount = parseFloat(document.getElementById('brush-intensity').value); 
-    if((studio.ports.warehouse[unit] || 0) >= amount) { 
-        studio.ports.warehouse[unit] -= amount; 
-        studio.ports.export[unit] = (studio.ports.export[unit] || 0) + amount; 
-        addLog(`READY TO EXPORT: ${amount} ${unit}`); save(); render(); 
-    } 
+function sailingAction() {
+    const unit = document.getElementById('color-choice').value;
+    const amount = studio.ports.export[unit];
+    if(amount > 0) {
+        // AならBへ、BならAへ
+        const targetBridge = document.title.includes("PORT A") ? 'TR_Bridge_to_PORT_B' : 'TR_Bridge_to_PORT_A';
+        localStorage.setItem(targetBridge, JSON.stringify({unit, amount, from: document.title}));
+        studio.ports.export[unit] = 0; studio.w += 0.0001;
+        addLog(`SAILED: ${amount} ${PURE_MAP[unit]}`); 
+        save(); render();
+    }
 }
 
-function sailingAction() { 
-    const unit = document.getElementById('color-choice').value; 
-    const amount = studio.ports.export[unit]; 
-    if(amount > 0) { 
-        localStorage.setItem('TR_Bridge_to_PORT_B', JSON.stringify({unit, amount, from:"PORT_A"})); 
-        studio.ports.export[unit] = 0; studio.w += 0.0001; 
-        addLog(`SAILED TO PORT B: ${amount} ${unit}`); save(); render(); 
-    } 
+function arrivalAction() {
+    const bridgeKey = document.title.includes("PORT A") ? 'TR_Bridge_to_PORT_A' : 'TR_Bridge_to_PORT_B';
+    const inc = JSON.parse(localStorage.getItem(bridgeKey));
+    if(inc) {
+        studio.ports.import[inc.unit] = (studio.ports.import[inc.unit] || 0) + inc.amount;
+        addLog(`ARRIVAL: ${inc.amount} ${PURE_MAP[inc.unit]}`);
+        localStorage.removeItem(bridgeKey); 
+        save(); render();
+    }
 }
 
-function arrivalAction() { 
-    const inc = JSON.parse(localStorage.getItem('TR_Bridge_to_PORT_A')); 
-    if(inc) { 
-        studio.ports.import[inc.unit] = (studio.ports.import[inc.unit] || 0) + inc.amount; 
-        addLog(`ARRIVAL FROM PORT B: ${inc.amount} ${inc.unit}`);
-        localStorage.removeItem('TR_Bridge_to_PORT_A'); save(); render(); 
-    } 
+function devanningAction() {
+    COLOR_SYSTEM.forEach(c => { 
+        studio.ports.warehouse[c] = (studio.ports.warehouse[c] || 0) + (studio.ports.import[c] || 0); 
+        studio.ports.import[c] = 0; 
+    });
+    addLog(`DEVANNING COMPLETE`); 
+    save(); render();
 }
 
-function devanningAction() { 
-    COLOR_SYSTEM.forEach(c => { studio.ports.warehouse[c] = (studio.ports.warehouse[c] || 0) + (studio.ports.import[c] || 0); studio.ports.import[c] = 0; }); 
-    addLog(`DEVANNING COMPLETE`); save(); render(); 
-}
-
-function showPane(id) { 
-    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active')); 
-    document.getElementById('pane-' + id).classList.add('active'); 
+function showPane(id) {
+    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+    document.getElementById('pane-' + id).classList.add('active');
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.getElementById('tab-' + id).classList.add('active');
 }
 
-function updateLabels() { /* 拡張用 */ }
-function executeClean() { 
-    if(confirm("港の内部（倉庫・日誌）のみをリセットしますか？ ※輸送中の荷物は保持されます。")) { 
-        // 全データを消すのではなく、現在の studio (港の状態) だけを初期化
-        init(); 
-        save(); 
-        location.reload(); 
-    } 
+function executeClean() {
+    if(confirm("港の内部（倉庫・日誌）のみをリセットしますか？")) {
+        init(); save(); location.reload();
+    }
 }
 
-const sel = document.getElementById('color-choice'); 
-COLOR_SYSTEM.forEach(c => sel.add(new Option(c, c)));
+// --- [5. 初期化実行] ---
+const sel = document.getElementById('color-choice');
+COLOR_SYSTEM.forEach(c => {
+    sel.add(new Option(PURE_MAP[c], c)); // 表示は通称、値(value)は真名
+});
 document.addEventListener('DOMContentLoaded', load);
 </script>
 </body>
