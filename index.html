@@ -16,7 +16,7 @@
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            justify-content: flex-start; /* 上から順に配置 */
+            justify-content: flex-start; 
             height: 100vh; 
             margin: 0; 
             padding: 20px;
@@ -30,7 +30,7 @@
         #log { 
             width: 100%; 
             max-width: 800px;
-            flex-grow: 1; /* ログエリアを可能な限り広げる */
+            flex-grow: 1; 
             border: 1px solid var(--gold); 
             overflow-y: auto; 
             padding: 15px; 
@@ -46,12 +46,10 @@
             width: 100%; 
             max-width: 800px;
             padding: 20px; 
-            /* 文字サイズを大きく調整 */
             font-size: clamp(1.2rem, 4vw, 1.8rem); 
             box-sizing: border-box;
             outline: none;
         }
-        /* プレースホルダーの視認性向上 */
         #cmd::placeholder {
             color: rgba(212, 175, 55, 0.5);
             font-size: 0.8em;
@@ -62,15 +60,27 @@
     <h1>⚓ PORT-A: ACTION DOCK</h1>
     <div id="log">>> SYSTEM READY. Awaiting 5W1H Command...</div>
     <input type="text" id="cmd" placeholder="WHAT / WHERE / WHO / WHEN / WHY / HOW" autofocus>
-    
+
     <script>
         const cmd = document.getElementById('cmd');
         const log = document.getElementById('log');
+
         cmd.addEventListener('keypress', (e) => {
             if(e.key === 'Enter' && cmd.value.trim() !== '') {
+                const val = cmd.value.toUpperCase();
+                const timestamp = new Date().toLocaleString();
+                
+                // 【同期回路：ここを追加】
+                const syncData = {
+                    time: timestamp,
+                    action: val,
+                    id: Date.now()
+                };
+                localStorage.setItem('PURE_TRADE_SYNC', JSON.stringify(syncData));
+
                 const p = document.createElement('p');
                 p.style.margin = "5px 0";
-                p.textContent = `> ${new Date().toLocaleTimeString()} : ${cmd.value.toUpperCase()}`;
+                p.textContent = `> ${new Date().toLocaleTimeString()} : ${val}`;
                 log.appendChild(p);
                 log.scrollTop = log.scrollHeight;
                 cmd.value = '';
