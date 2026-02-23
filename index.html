@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8"><title>PORT-A: Action</title>
+    <style>
+        body { background: #000; color: #D4AF37; font-family: monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        #log { width: 80%; height: 300px; border: 1px solid #D4AF37; overflow-y: scroll; padding: 20px; margin-bottom: 20px; background: rgba(212, 175, 55, 0.05); }
+        input { background: none; border: 1px solid #D4AF37; color: #fff; width: 80%; padding: 15px; font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+    <h1>⚓ PORT-A: ACTION DOCK</h1>
+    <div id="log">>> Awaiting Command...</div>
+    <input type="text" id="cmd" placeholder="WHAT / WHERE / WHO / WHEN / WHY / HOW" autofocus>
+    <script>
+        const cmd = document.getElementById('cmd');
+        const log = document.getElementById('log');
+        cmd.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') {
+                const p = document.createElement('p');
+                p.textContent = `> ${new Date().toLocaleTimeString()} : EXECUTING [ ${cmd.value} ]`;
+                log.appendChild(p);
+                log.scrollTop = log.scrollHeight;
+                cmd.value = '';
+                // ここに PURE への通信ロジックを後で追加
+            }
+        });
+    </script>
+</body>
+</html>
